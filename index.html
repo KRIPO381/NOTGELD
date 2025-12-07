@@ -1,127 +1,190 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bankjegy Galéria</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terméklista</title>
   <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f5f6fa;
-      margin: 0; padding: 40px 10px;
-    }
-    h1 {
-      text-align: center;
-      color: #1e3d69;
-      margin-bottom: 35px;
-    }
-    .gallery {
-      max-width: 950px;
-      margin: 0 auto;
-    }
-    .item {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 18px 24px;
-      margin-bottom: 20px;
-    }
-    .topline {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 6px;
-      margin-bottom: 14px;
-      font-weight: 600;
-    }
-    .images {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .images img {
-      width: 49%;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.15);
-      cursor: pointer;
-      transition: transform 0.25s ease;
-    }
-    .images img:hover { transform: scale(1.04); }
-    #modal {
-      display: none;
-      position: fixed;
-      z-index: 10;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.9);
-    }
-    #modal img {
-      display: block;
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      max-width: 96vw; max-height: 92vh;
-      border-radius: 6px;
-    }
-    .close {
-      position: fixed;
-      top: 20px; right: 30px;
-      color: white;
-      font-size: 2em;
-      cursor: pointer;
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:0;background:#f7f7f7;color:#111}
+    .container{max-width:1000px;margin:18px auto;padding:12px}
+    header{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px;position:sticky;top:8px;z-index:5}
+    header .row{display:flex;gap:12px;align-items:center}
+    header .row > div{flex:1;font-weight:600}
+    .items{display:flex;flex-direction:column;gap:12px}
+    .item{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .meta{min-width:180px}
+    .meta .sorszam{font-weight:700;font-size:1.05rem}
+    .meta .desc{color:#333}
+    .photos{display:flex;gap:8px;flex:1;align-items:center;flex-wrap:wrap}
+    .photos img{width:180px;height:180px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid #ddd}
+    .note{font-size:.85rem;color:#666;margin-top:6px}
+    /* Lightbox */
+    .lb{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);z-index:9999}
+    .lb.visible{display:flex}
+    .lb img{max-width:95%;max-height:95%;box-shadow:0 6px 30px rgba(0,0,0,.5);border-radius:4px}
+    .lb .close{position:absolute;top:16px;right:18px;color:white;font-size:22px;cursor:pointer}
+    .lb .info{position:absolute;bottom:18px;left:18px;color:white;font-size:14px}
+    /* responsive */
+    @media (max-width:640px){
+      .photos img{width:140px;height:140px}
+      .meta{min-width:140px}
     }
   </style>
 </head>
 <body>
-  <h1>Bankjegy Galéria</h1>
-  <div class="gallery" id="gallery"></div>
+  <div class="container">
+    <header id="header">
+      <div class="row">
+        <div id="h-sorszam">Sorszám</div>
+        <div id="h-leiras">Leírás</div>
+        <div id="h-ar">Ár</div>
+      </div>
+      <div class="note">Szerkeszd a <code>data.csv</code>-t Excelben. A képeket tedd az <code>images/</code> mappába: pl. <code>001_front.jpg</code> és <code>001_back.jpg</code></div>
+    </header>
 
-  <!-- Nagyítás ablak -->
-  <div id="modal" onclick="closeModal()">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <img id="modal-img" alt="">
+    <main>
+      <div class="items" id="items"></div>
+    </main>
   </div>
 
-<script>
-fetch('adatok.csv')
-  .then(res => res.text())
-  .then(data => {
-    // Tisztítsuk meg a beolvasott adatokat
-    data = data.replace(/\r/g, '').trim();
-    const firstChar = data.includes(';') ? ';' : ','; // ha mégis ,-vel mentette
-    const rows = data.split('\n').slice(1); // első sor a fejléc
-    const gallery = document.getElementById('gallery');
+  <!-- lightbox -->
+  <div id="lightbox" class="lb" tabindex="0">
+    <div class="close" id="lb-close">&times;</div>
+    <img id="lb-img" src="" alt="Nagy kép" />
+    <div class="info" id="lb-info"></div>
+  </div>
 
-    rows.forEach(line => {
-      if (!line.trim()) return;
-      const clean = line.replace(/"/g, ''); // idézőjelek eltávolítása
-      const [sorszam, leiras, ar, elolap, hatlap] = clean.split(firstChar);
-      if (!sorszam) return;
+  <script>
+  // beolvasás: data.csv (ugyanabban a könyvtárban)
+  async function loadCSV(){
+    try{
+      const res = await fetch('data.csv');
+      if(!res.ok) throw new Error('Nem található data.csv (győződj meg róla, hogy a repóban van és GitHub Pages-en a raw elérhető).');
+      const text = await res.text();
+      parseCSV(text);
+    }catch(err){
+      console.error(err);
+      document.getElementById('items').innerHTML = '<div style="padding:12px;color:#900">Hiba a data.csv beolvasásakor: '+err.message+'</div>';
+    }
+  }
 
-      const item = document.createElement('div');
-      item.className = 'item';
-      item.innerHTML = `
-        <div class="topline">
-          <span>${sorszam}. ${leiras}</span>
-          <span>${ar}</span>
+  function parseCSV(text){
+    // egyszerű CSV parser: sorok by \n, vesszők elválasztás (idézőjelek kezelése)
+    const rows = [];
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length>0);
+    if(lines.length===0) return;
+    // header
+    const header = csvSplitLine(lines[0]);
+    document.getElementById('h-sorszam').textContent = header[0] || 'Sorszám';
+    document.getElementById('h-leiras').textContent = header[1] || 'Leírás';
+    document.getElementById('h-ar').textContent = header[2] || 'Ár';
+
+    for(let i=1;i<lines.length;i++){
+      const cols = csvSplitLine(lines[i]);
+      // Ha kevesebb oszlop: töltse fel üres stringgel
+      while(cols.length < 3) cols.push('');
+      rows.push({sorsz: cols[0].trim(), leiras: cols[1].trim(), ar: cols[2].trim()});
+    }
+    renderRows(rows);
+  }
+
+  function csvSplitLine(line){
+    const out = [];
+    let cur = '';
+    let inQuotes = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"' ){
+        // lehet dupla idézőjel escape
+        if(inQuotes && line[i+1]==='"'){ cur += '"'; i++; continue; }
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if(ch === ',' && !inQuotes){
+        out.push(cur);
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function pad(n, width=3){
+    const s = String(n);
+    return s.padStart(width,'0');
+  }
+
+  function renderRows(rows){
+    const container = document.getElementById('items');
+    container.innerHTML = '';
+    rows.forEach(row => {
+      const sorszPlain = row.sorsz || '';
+      // próbáljuk számként kezelni, és 3 számjegyűre padolni; ha már 001 formában van, használjuk
+      let sorszPad = sorszPlain;
+      if(/^\d+$/.test(sorszPlain)) sorszPad = pad(Number(sorszPlain),3);
+
+      const front = `images/${sorszPad}_front.jpg`;
+      const back  = `images/${sorszPad}_back.jpg`;
+
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <div class="meta">
+          <div class="sorszam">${sorszPlain}</div>
+          <div class="desc">${escapeHtml(row.leiras)}</div>
+          <div class="price">${escapeHtml(row.ar)}</div>
         </div>
-        <div class="images">
-          <img src="${(elolap||'').trim()}" alt="Előlap" onclick="openModal(this)">
-          <img src="${(hatlap||'').trim()}" alt="Hátlap" onclick="openModal(this)">
+        <div class="photos">
+          <img data-src="${front}" alt="${sorszPlain} front" loading="lazy" src="${front}" />
+          <img data-src="${back}" alt="${sorszPlain} back" loading="lazy" src="${back}" />
         </div>
       `;
-      gallery.appendChild(item);
+      container.appendChild(div);
     });
+
+    // add click handlers for all images
+    document.querySelectorAll('.photos img').forEach(img=>{
+      img.addEventListener('click', ev=>{
+        openLightbox(ev.currentTarget.src, ev.currentTarget.alt);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return s
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;');
+  }
+
+  // lightbox
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img');
+  const lbInfo = document.getElementById('lb-info');
+  const lbClose = document.getElementById('lb-close');
+  function openLightbox(src, alt){
+    lbImg.src = src;
+    lbInfo.textContent = alt;
+    lb.classList.add('visible');
+    lb.focus();
+  }
+  function closeLightbox(){
+    lb.classList.remove('visible');
+    lbImg.src = '';
+  }
+  lbClose.addEventListener('click',closeLightbox);
+  lb.addEventListener('click', (e)=>{
+    if(e.target === lb || e.target === lbImg) closeLightbox();
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape') closeLightbox();
   });
 
-function openModal(img) {
-  document.getElementById('modal-img').src = img.src;
-  document.getElementById('modal').style.display = 'block';
-}
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-}
-</script>
-
+  // init
+  loadCSV();
+  </script>
 </body>
 </html>
