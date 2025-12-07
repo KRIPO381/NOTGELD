@@ -1,4 +1,4 @@
-sorszam,leiras,ar,front,back
-001,Sopron 50 Pfennig,1500,001_front.jpg,001_back.jpg
-002,Bécs 20 Heller,1200,002_front.jpg,002_back.jpg
-003,Graz 1 Krone,2000,003_front.jpg,003_back.jpg
+sorszam;leiras;ar;front;back
+001;Sopron 50 Pfennig;1500;001_front.jpg;001_back.jpg
+002;Bécs 20 Heller;1200;002_front.jpg;002_back.jpg
+003;Graz 1 Krone;2000;003_front.jpg;003_back.jpg
