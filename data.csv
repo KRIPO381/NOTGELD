@@ -1,12 +1,12 @@
-Sorszám,Leírás,Ár
-1,"4 db egyben, hajtatlan","1900 Ft"
-2,"5 db egyben, hajtatlan","1901 Ft"
-3,"6 db egyben, hajtatlan","1902 Ft"
-4,"7 db egyben, hajtatlan","1903 Ft"
-5,"8 db egyben, hajtatlan","1904 Ft"
-6,"9 db egyben, hajtatlan","1905 Ft"
-7,"10 db egyben, hajtatlan","1906 Ft"
-8,"11 db egyben, hajtatlan","1907 Ft"
-9,"12 db egyben, hajtatlan","1908 Ft"
-10,"13 db egyben, hajtatlan","1909 Ft"
-11,"14 db egyben, hajtatlan","1910 Ft"
+Sorszám,Leírás,Ár,,
+1,"4 db egyben, hajtatlan",1900 Ft,001_front.jpg,001_back.jpg
+2,"5 db egyben, hajtatlan",1901 Ft,002_front.jpg,002_back.jpg
+3,"6 db egyben, hajtatlan",1902 Ft,003_front.jpg,003_back.jpg
+4,"7 db egyben, hajtatlan",1903 Ft,004_front.jpg,004_back.jpg
+5,"8 db egyben, hajtatlan",1904 Ft,005_front.jpg,005_back.jpg
+6,"9 db egyben, hajtatlan",1905 Ft,006_front.jpg,006_back.jpg
+7,"10 db egyben, hajtatlan",1906 Ft,007_front.jpg,007_back.jpg
+8,"11 db egyben, hajtatlan",1907 Ft,008_front.jpg,008_back.jpg
+9,"12 db egyben, hajtatlan",1908 Ft,009_front.jpg,009_back.jpg
+10,"13 db egyben, hajtatlan",1909 Ft,010_front.jpg,010_back.jpg
+11,"14 db egyben, hajtatlan",1910 Ft,011_front.jpg,011_back.jpg
