@@ -6,9 +6,10 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         .item { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-        img { width: 300px; margin-right: 20px; border: 1px solid #999; }
-        .images { display: flex; }
+        img { width: 280px; margin-right: 20px; border: 1px solid #999; }
+        .images { display: flex; flex-wrap: wrap; }
         h2 { margin-top: 0; }
+        .price { font-weight: bold; margin-top: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -25,21 +26,26 @@ fetch("adatok.csv")
         const lista = document.getElementById("lista");
 
         sorok.forEach(sor => {
-            const [id, telepules, cimlet, front, back] = sor.split(",");
+            const [sorszam, leiras, ar, front, back] = sor.split(",");
 
             const elem = document.createElement("div");
             elem.className = "item";
 
             elem.innerHTML = `
-                <h2>${id} – ${telepules} (${cimlet})</h2>
+                <h2>${sorszam}. ${leiras}</h2>
                 <div class="images">
-                    <img src="${front}" alt="Front">
-                    <img src="${back}" alt="Back">
+                    <img src="${front}" alt="${sorszam} front">
+                    <img src="${back}" alt="${sorszam} back">
                 </div>
+                <div class="price">Ár: ${ar} Ft</div>
             `;
 
             lista.appendChild(elem);
         });
+    })
+    .catch(err => {
+        document.getElementById("lista").innerHTML =
+            "<p style='color:red;'>Hiba: nem található az adatok.csv</p>";
     });
 </script>
 
