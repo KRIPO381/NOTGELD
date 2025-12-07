@@ -86,12 +86,18 @@
 fetch('adatok.csv')
   .then(res => res.text())
   .then(data => {
-    const lines = data.trim().split(/\r?\n/).slice(1); // fejléc kihagyása
+    // Tisztítsuk meg a beolvasott adatokat
+    data = data.replace(/\r/g, '').trim();
+    const firstChar = data.includes(';') ? ';' : ','; // ha mégis ,-vel mentette
+    const rows = data.split('\n').slice(1); // első sor a fejléc
     const gallery = document.getElementById('gallery');
-    
-    lines.forEach(line => {
-      const [sorszam, leiras, ar, elolap, hatlap] = line.split(';');
+
+    rows.forEach(line => {
+      if (!line.trim()) return;
+      const clean = line.replace(/"/g, ''); // idézőjelek eltávolítása
+      const [sorszam, leiras, ar, elolap, hatlap] = clean.split(firstChar);
       if (!sorszam) return;
+
       const item = document.createElement('div');
       item.className = 'item';
       item.innerHTML = `
@@ -100,8 +106,8 @@ fetch('adatok.csv')
           <span>${ar}</span>
         </div>
         <div class="images">
-          <img src="${elolap.trim()}" alt="Előlap" onclick="openModal(this)">
-          <img src="${hatlap.trim()}" alt="Hátlap" onclick="openModal(this)">
+          <img src="${(elolap||'').trim()}" alt="Előlap" onclick="openModal(this)">
+          <img src="${(hatlap||'').trim()}" alt="Hátlap" onclick="openModal(this)">
         </div>
       `;
       gallery.appendChild(item);
@@ -109,13 +115,11 @@ fetch('adatok.csv')
   });
 
 function openModal(img) {
-  const modal = document.getElementById('modal');
-  const modalImg = document.getElementById('modal-img');
-  modal.style.display = "block";
-  modalImg.src = img.src;
+  document.getElementById('modal-img').src = img.src;
+  document.getElementById('modal').style.display = 'block';
 }
 function closeModal() {
-  document.getElementById("modal").style.display = "none";
+  document.getElementById('modal').style.display = 'none';
 }
 </script>
 
