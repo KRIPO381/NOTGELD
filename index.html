@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bankjegy Galéria</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 40px 10px;
+    }
+    h1 {
+      text-align: center;
+      color: #1e3d69;
+      margin-bottom: 35px;
+    }
+    .gallery {
+      max-width: 950px;
+      margin: 0 auto;
+    }
+    .item {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 18px 24px;
+      margin-bottom: 20px;
+    }
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+    .images {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .images img {
+      width: 49%;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.25s ease;
+    }
+    .images img:hover {
+      transform: scale(1.04);
+    }
+    /* Felugró nagyítás */
+    #modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.9);
+    }
+    #modal img {
+      display: block;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 96vw;
+      max-height: 92vh;
+      border-radius: 6px;
+    }
+    .close {
+      position: fixed;
+      top: 20px; right: 30px;
+      color: white;
+      font-size: 2em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Bankjegy Galéria</h1>
+<div class="gallery" id="gallery"></div>
+
+<!-- Felugró nézet -->
+<div id="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img id="modal-img" alt="">
+</div>
+
+<script>
+// Beolvassuk a CSV fájlt
+fetch('adatok.csv')
+  .then(res => res.text())
+  .then(data => {
+    const rows = data.replace(/\r/g, '').trim().split('\n').slice(1);
+    const gal = document.getElementById('gallery');
+    rows.forEach(row => {
+      const [sorszam, leiras, ar] = row.split(';');
+      if (!sorszam) return;
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML = `
+        <div class="topline">
+          <span>${sorszam}. ${leiras}</span>
+          <span>${ar}</span>
+        </div>
+        <div class="images">
+          <img src="${sorszam.padStart(3,'0')}_front.jpg" alt="Előlap" onclick="openModal(this)">
+          <img src="${sorszam.padStart(3,'0')}_back.jpg" alt="Hátlap" onclick="openModal(this)">
+        </div>
+      `;
+      gal.appendChild(item);
+    });
+  });
+
+function openModal(img) {
+  document.getElementById('modal-img').src = img.src;
+  document.getElementById('modal').style.display = 'block';
+}
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
