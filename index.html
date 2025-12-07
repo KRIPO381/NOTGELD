@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bankjegy Galéria</title>
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f5f6fa;
-      margin: 0;
-      padding: 40px 10px;
+      background: #f5f6fa;
+      margin: 0; padding: 40px 10px;
     }
     h1 {
       text-align: center;
@@ -30,12 +29,10 @@
     .topline {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
-      font-weight: 600;
-      color: #333;
       border-bottom: 1px solid #ddd;
       padding-bottom: 6px;
       margin-bottom: 14px;
+      font-weight: 600;
     }
     .images {
       display: flex;
@@ -49,10 +46,7 @@
       cursor: pointer;
       transition: transform 0.25s ease;
     }
-    .images img:hover {
-      transform: scale(1.04);
-    }
-    /* Felugró nagyítás */
+    .images img:hover { transform: scale(1.04); }
     #modal {
       display: none;
       position: fixed;
@@ -66,8 +60,7 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      max-width: 96vw;
-      max-height: 92vh;
+      max-width: 96vw; max-height: 92vh;
       border-radius: 6px;
     }
     .close {
@@ -80,25 +73,24 @@
   </style>
 </head>
 <body>
+  <h1>Bankjegy Galéria</h1>
+  <div class="gallery" id="gallery"></div>
 
-<h1>Bankjegy Galéria</h1>
-<div class="gallery" id="gallery"></div>
-
-<!-- Felugró nézet -->
-<div id="modal" onclick="closeModal()">
-  <span class="close" onclick="closeModal()">&times;</span>
-  <img id="modal-img" alt="">
-</div>
+  <!-- Nagyítás ablak -->
+  <div id="modal" onclick="closeModal()">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img id="modal-img" alt="">
+  </div>
 
 <script>
-// Beolvassuk a CSV fájlt
 fetch('adatok.csv')
   .then(res => res.text())
   .then(data => {
-    const rows = data.replace(/\r/g, '').trim().split('\n').slice(1);
-    const gal = document.getElementById('gallery');
-    rows.forEach(row => {
-      const [sorszam, leiras, ar] = row.split(';');
+    const lines = data.trim().split(/\r?\n/).slice(1); // fejléc kihagyása
+    const gallery = document.getElementById('gallery');
+    
+    lines.forEach(line => {
+      const [sorszam, leiras, ar, elolap, hatlap] = line.split(';');
       if (!sorszam) return;
       const item = document.createElement('div');
       item.className = 'item';
@@ -108,20 +100,22 @@ fetch('adatok.csv')
           <span>${ar}</span>
         </div>
         <div class="images">
-          <img src="${sorszam.padStart(3,'0')}_front.jpg" alt="Előlap" onclick="openModal(this)">
-          <img src="${sorszam.padStart(3,'0')}_back.jpg" alt="Hátlap" onclick="openModal(this)">
+          <img src="${elolap.trim()}" alt="Előlap" onclick="openModal(this)">
+          <img src="${hatlap.trim()}" alt="Hátlap" onclick="openModal(this)">
         </div>
       `;
-      gal.appendChild(item);
+      gallery.appendChild(item);
     });
   });
 
 function openModal(img) {
-  document.getElementById('modal-img').src = img.src;
-  document.getElementById('modal').style.display = 'block';
+  const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modal-img');
+  modal.style.display = "block";
+  modalImg.src = img.src;
 }
 function closeModal() {
-  document.getElementById('modal').style.display = 'none';
+  document.getElementById("modal").style.display = "none";
 }
 </script>
 
