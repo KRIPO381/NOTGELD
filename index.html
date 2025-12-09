@@ -46,6 +46,7 @@ h1 {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  position: relative;
 }
 .images img {
   width: 45%;
@@ -53,10 +54,26 @@ h1 {
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
+  position: relative;
 }
 .images img:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(0,0,0,0.25);
+}
+
+/* ELKELT vízjel */
+.sold::after {
+  content: "ELKELT";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  font-size: 3em;
+  font-weight: 900;
+  color: rgba(255,0,0,0.55);
+  text-shadow: 0 0 5px #000;
+  letter-spacing: 5px;
+  pointer-events: none;
 }
 
 /* Felugró nagyítás */
@@ -89,7 +106,7 @@ h1 {
 </head>
 <body>
 
-<h1>Eladó Bankjegyeim</h1>
+<h1>Eladó Bankjegyeim</h1>
 <div id="gallery"></div>
 
 <div id="modal" class="modal" onclick="closeModal()">
@@ -103,11 +120,18 @@ fetch('bankjegyek.csv')
   .then(data => {
     const rows = data.replace(/\r/g, '').trim().split('\n').slice(1);
     const gallery = document.getElementById('gallery');
+
     rows.forEach(row => {
-      const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, elolap, hatlap] = row.split(';');
+      const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, statusz, elolap, hatlap] =
+        row.split(';');
+
       if (!orszag) return;
+
+      const isSold = statusz && statusz.trim().toUpperCase() === "ELKELT";
+
       const card = document.createElement('div');
       card.className = 'banknote';
+
       card.innerHTML = `
         <div class="number">${sorsz}.</div>
         <div class="info">
@@ -117,12 +141,21 @@ fetch('bankjegyek.csv')
           <p><strong>Állapot:</strong> ${allapot}</p>
           <p><strong>Leírás:</strong> ${leiras}</p>
           <p><strong>Ár:</strong> ${ar}</p>
+          <p><strong>Státusz:</strong> <span style="font-weight:900; color:${isSold?"red":"green"}">
+            ${isSold ? "ELKELT" : "elérhető"}
+          </span></p>
         </div>
+
         <div class="images">
-          <img src="${elolap ? elolap.trim() : ''}" alt="Előlap" onclick="openModal(this)">
-          <img src="${hatlap ? hatlap.trim() : ''}" alt="Hátlap" onclick="openModal(this)">
+          <div class="${isSold?"sold":""}">
+            <img src="${elolap}" alt="Előlap" onclick="openModal(this)">
+          </div>
+          <div class="${isSold?"sold":""}">
+            <img src="${hatlap}" alt="Hátlap" onclick="openModal(this)">
+          </div>
         </div>
       `;
+
       gallery.appendChild(card);
     });
   });
