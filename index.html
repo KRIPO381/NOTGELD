@@ -41,15 +41,20 @@ h1 {
 .number { font-size: 1.3em; font-weight: 700; color: #1E5BAB; margin-right: 8px; }
 .info { flex: 1; line-height: 1.45em; font-size: 0.95em; color: #333; }
 
-.info .orszag {
+.info .orszag strong,
+.info .ar strong {
+  color: #000; /* a címkék feketék maradnak */
+}
+
+.info .orszag span {
   font-weight: 700;
-  color: #1E5BAB;
+  color: #1E5BAB; /* ország érték kék */
   font-size: 1.05em;
 }
 
-.info .ar {
+.info .ar span {
   font-weight: 700;
-  color: #9b1c1c;
+  color: #9b1c1c; /* ár érték bordó */
   font-size: 1.06em;
 }
 
@@ -154,12 +159,12 @@ fetch('bankjegyek.csv')
         <div class="number">${sorsz}.</div>
 
         <div class="info">
-          <p class="orszag"><strong>Ország:</strong> ${orszag}</p>
+          <p class="orszag"><strong>Ország:</strong> <span>${orszag}</span></p>
           <p><strong>Címlet:</strong> ${cimlet}</p>
           <p><strong>Évjárat:</strong> ${ev}</p>
           <p><strong>Állapot:</strong> ${allapot}</p>
           <p><strong>Leírás:</strong> ${leiras}</p>
-          <p class="ar"><strong>Ár:</strong> ${ar}</p>
+          <p class="ar"><strong>Ár:</strong> <span>${ar}</span></p>
           <p class="statusz ${statusz}">${statusz}</p>
         </div>
 
