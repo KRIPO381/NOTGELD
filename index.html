@@ -41,6 +41,28 @@ h1 {
 .number { font-size: 1.3em; font-weight: 700; color: #1E5BAB; margin-right: 8px; }
 .info { flex: 1; line-height: 1.45em; font-size: 0.95em; color: #333; }
 
+.info .orszag {
+  font-weight: 700;
+  color: #1E5BAB;
+  font-size: 1.05em;
+}
+
+.info .ar {
+  font-weight: 700;
+  color: #9b1c1c;
+  font-size: 1.06em;
+}
+
+.statusz {
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 4px;
+}
+.statusz.elerheto { background: #dbffdb; color: #0a7a0a; }
+.statusz.ELKELT { background: #ffd3d3; color: #b30000; }
+
 .images {
   flex: 1;
   display: flex;
@@ -48,13 +70,13 @@ h1 {
   gap: 12px;
   position: relative;
 }
+
 .images img {
   width: 45%;
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
-  position: relative;
 }
 .images img:hover {
   transform: scale(1.05);
@@ -62,18 +84,16 @@ h1 {
 }
 
 /* ELKELT vízjel */
-.sold::after {
-  content: "ELKELT";
+.images .watermark {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-25deg);
-  font-size: 3em;
+  transform: translate(-50%, -50%) rotate(-20deg);
+  font-size: 2.6em;
   font-weight: 900;
-  color: rgba(255,0,0,0.55);
-  text-shadow: 0 0 5px #000;
-  letter-spacing: 5px;
+  color: rgba(255, 0, 0, 0.55);
   pointer-events: none;
+  text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
 }
 
 /* Felugró nagyítás */
@@ -122,37 +142,31 @@ fetch('bankjegyek.csv')
     const gallery = document.getElementById('gallery');
 
     rows.forEach(row => {
-      const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, statusz, elolap, hatlap] =
-        row.split(';');
-
+      const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, statusz, elolap, hatlap] = row.split(';');
       if (!orszag) return;
-
-      const isSold = statusz && statusz.trim().toUpperCase() === "ELKELT";
 
       const card = document.createElement('div');
       card.className = 'banknote';
 
+      const isSold = statusz.trim().toUpperCase() === "ELKELT";
+
       card.innerHTML = `
         <div class="number">${sorsz}.</div>
+
         <div class="info">
-          <p><strong>Ország:</strong> ${orszag}</p>
+          <p class="orszag"><strong>Ország:</strong> ${orszag}</p>
           <p><strong>Címlet:</strong> ${cimlet}</p>
           <p><strong>Évjárat:</strong> ${ev}</p>
           <p><strong>Állapot:</strong> ${allapot}</p>
           <p><strong>Leírás:</strong> ${leiras}</p>
-          <p><strong>Ár:</strong> ${ar}</p>
-          <p><strong>Státusz:</strong> <span style="font-weight:900; color:${isSold?"red":"green"}">
-            ${isSold ? "ELKELT" : "elérhető"}
-          </span></p>
+          <p class="ar"><strong>Ár:</strong> ${ar}</p>
+          <p class="statusz ${statusz}">${statusz}</p>
         </div>
 
         <div class="images">
-          <div class="${isSold?"sold":""}">
-            <img src="${elolap}" alt="Előlap" onclick="openModal(this)">
-          </div>
-          <div class="${isSold?"sold":""}">
-            <img src="${hatlap}" alt="Hátlap" onclick="openModal(this)">
-          </div>
+          ${isSold ? '<div class="watermark">ELKELT</div>' : ''}
+          <img src="${elolap.trim()}" alt="Előlap" onclick="openModal(this)">
+          <img src="${hatlap.trim()}" alt="Hátlap" onclick="openModal(this)">
         </div>
       `;
 
