@@ -14,9 +14,51 @@ body {
 }
 
 h1 {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color: #ff0000;
+  margin-bottom: 15px;
+}
+
+/* Diszkrét gomb a főcím mellett */
+#sum-button {
+  background:#e0e0e0;  /* halvány szürke */
+  color:#333;           /* sötétszürke szöveg */
+  border:none;
+  border-radius:4px;
+  padding:2px 6px;      /* kisebb gomb */
+  font-size:0.9em;      /* kisebb betű */
+  cursor:pointer;
+  font-weight:bold;
+}
+#sum-button:hover {
+  background:#d0d0d0;   /* kicsit sötétebb hover */
+}
+#sum-display {
+  font-weight:600;
+  margin-left:5px;
+}
+
+/* Rendező gombok */
+.sort-buttons {
   text-align: center;
-  color: #24385b;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
+}
+.sort-buttons button {
+  background: #1E5BAB;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  margin: 0 6px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sort-buttons button:hover {
+  background: #174a8f;
 }
 
 #gallery {
@@ -34,36 +76,20 @@ h1 {
   padding: 18px 24px;
   margin-bottom: 15px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  transition: box-shadow 0.3s ease;
 }
-.banknote:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
 
 .number { font-size: 1.3em; font-weight: 700; color: #1E5BAB; margin-right: 8px; }
 .info { flex: 1; line-height: 1.45em; font-size: 0.95em; color: #333; }
 
-.info .orszag strong,
-.info .ar strong {
-  color: #000; /* a címkék feketék maradnak */
-}
-
-.info .orszag span {
-  font-weight: 700;
-  color: #1E5BAB; /* ország érték kék */
-  font-size: 1.05em;
-}
-
-.info .ar span {
-  font-weight: 700;
-  color: #9b1c1c; /* ár érték bordó */
-  font-size: 1.06em;
-}
+.info p strong { color: #000; }
+.info .orszag span { font-weight: 700; color: #1E5BAB; }
+.info .ar span { font-weight: 700; color: #ff0000; }
+.status-value { color: #006400; font-weight: 700; }
 
 .statusz {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  display: inline-block;
-  margin-top: 4px;
 }
 .statusz.elerheto { background: #dbffdb; color: #0a7a0a; }
 .statusz.ELKELT { background: #ffd3d3; color: #b30000; }
@@ -75,20 +101,11 @@ h1 {
   gap: 12px;
   position: relative;
 }
-
 .images img {
   width: 45%;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: 0 0 6px rgba(0,0,0,0.1);
 }
-.images img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(0,0,0,0.25);
-}
-
-/* ELKELT vízjel */
 .images .watermark {
   position: absolute;
   top: 50%;
@@ -96,46 +113,52 @@ h1 {
   transform: translate(-50%, -50%) rotate(-20deg);
   font-size: 2.6em;
   font-weight: 900;
-  color: rgba(255, 0, 0, 0.55);
-  pointer-events: none;
-  text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+  color: rgba(255,0,0,0.55);
 }
 
-/* Felugró nagyítás */
 .modal {
   display: none;
   position: fixed;
-  z-index: 10;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(0,0,0,0.9);
+  inset: 0;
+  background: rgba(0,0,0,0.9);
 }
 .modal img {
-  display: block;
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   max-width: 96vw;
   max-height: 92vh;
-  border-radius: 8px;
 }
 .close {
   position: fixed;
-  top: 20px; right: 40px;
+  top: 20px;
+  right: 40px;
   color: white;
   font-size: 2em;
   cursor: pointer;
 }
 </style>
-
 </head>
+
 <body>
 
-<h1>Eladó Bankjegyeim</h1>
+<h1>
+  Eladó Bankjegyeim
+  <button id="sum-button">∑</button>
+  <span id="sum-display"></span>
+</h1>
+
+<!-- Rendező gombok -->
+<div class="sort-buttons">
+  <button onclick="sortByCountry()">Országok (ABC)</button>
+  <button onclick="sortByPrice()">Árak (emelkedő)</button>
+  <button onclick="sortByOriginal()">Feltöltési időrend</button>
+</div>
+
 <div id="gallery"></div>
 
 <div id="modal" class="modal" onclick="closeModal()">
-  <span class="close" onclick="closeModal()">&times;</span>
+  <span class="close">&times;</span>
   <img id="modal-img" alt="">
 </div>
 
@@ -146,47 +169,84 @@ fetch('bankjegyek.csv')
     const rows = data.replace(/\r/g, '').trim().split('\n').slice(1);
     const gallery = document.getElementById('gallery');
 
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
       const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, statusz, elolap, hatlap] = row.split(';');
       if (!orszag) return;
 
       const card = document.createElement('div');
       card.className = 'banknote';
+      card.dataset.country = orszag.toLowerCase();
+      card.dataset.price = parseFloat(ar.replace(/[^\d]/g, '')) || 0;
+      card.dataset.original = index;
 
       const isSold = statusz.trim().toUpperCase() === "ELKELT";
 
       card.innerHTML = `
         <div class="number">${sorsz}.</div>
-
         <div class="info">
           <p class="orszag"><strong>Ország:</strong> <span>${orszag}</span></p>
           <p><strong>Címlet:</strong> ${cimlet}</p>
           <p><strong>Évjárat:</strong> ${ev}</p>
-          <p><strong>Állapot:</strong> ${allapot}</p>
+          <p><strong>Állapot:</strong> <span class="status-value">${allapot}</span></p>
           <p><strong>Leírás:</strong> ${leiras}</p>
           <p class="ar"><strong>Ár:</strong> <span>${ar}</span></p>
           <p class="statusz ${statusz}">${statusz}</p>
         </div>
-
         <div class="images">
           ${isSold ? '<div class="watermark">ELKELT</div>' : ''}
-          <img src="${elolap.trim()}" alt="Előlap" onclick="openModal(this)">
-          <img src="${hatlap.trim()}" alt="Hátlap" onclick="openModal(this)">
+          <img src="${elolap.trim()}" onclick="openModal(this)">
+          <img src="${hatlap.trim()}" onclick="openModal(this)">
         </div>
       `;
-
       gallery.appendChild(card);
     });
   });
 
+function sortByCountry() {
+  const gallery = document.getElementById('gallery');
+  [...gallery.children]
+    .sort((a,b) => a.dataset.country.localeCompare(b.dataset.country, 'hu'))
+    .forEach(el => gallery.appendChild(el));
+}
+
+function sortByPrice() {
+  const gallery = document.getElementById('gallery');
+  [...gallery.children]
+    .sort((a,b) => a.dataset.price - b.dataset.price)
+    .forEach(el => gallery.appendChild(el));
+}
+
+function sortByOriginal() {
+  const gallery = document.getElementById('gallery');
+  [...gallery.children]
+    .sort((a,b) => (a.dataset.original || 0) - (b.dataset.original || 0))
+    .forEach(el => gallery.appendChild(el));
+}
+
+// Toggle összesített ár megjelenítés
+let sumVisible = false;
+document.getElementById('sum-button').addEventListener('click', () => {
+  const display = document.getElementById('sum-display');
+  if(sumVisible){
+    display.textContent = '';
+    sumVisible = false;
+  } else {
+    const gallery = document.getElementById('gallery');
+    let total = 0;
+    [...gallery.children].forEach(card => {
+      total += parseFloat(card.dataset.price) || 0;
+    });
+    display.textContent = total.toLocaleString('hu-HU') + ' Ft';
+    sumVisible = true;
+  }
+});
+
 function openModal(img) {
-  const modal = document.getElementById('modal');
-  const modalImg = document.getElementById('modal-img');
-  modal.style.display = "block";
-  modalImg.src = img.src;
+  document.getElementById('modal').style.display = "block";
+  document.getElementById('modal-img').src = img.src;
 }
 function closeModal() {
-  document.getElementById("modal").style.display = "none";
+  document.getElementById('modal').style.display = "none";
 }
 </script>
 
