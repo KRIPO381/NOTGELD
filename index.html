@@ -19,26 +19,30 @@ h1 {
   justify-content:center;
   gap:10px;
   color: #ff0000;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
-/* Diszkrét gomb a főcím mellett */
+/* Diszkrét összeg gomb */
 #sum-button {
-  background:#e0e0e0;  /* halvány szürke */
-  color:#333;           /* sötétszürke szöveg */
+  background:#f0f0f0;
+  color:#555;
   border:none;
   border-radius:4px;
-  padding:2px 6px;      /* kisebb gomb */
-  font-size:0.9em;      /* kisebb betű */
+  padding:2px 6px;
+  font-size:0.85em;
   cursor:pointer;
   font-weight:bold;
 }
-#sum-button:hover {
-  background:#d0d0d0;   /* kicsit sötétebb hover */
-}
-#sum-display {
+#sum-button:hover { background:#e0e0e0; }
+#sum-display { font-weight:600; margin-left:5px; }
+
+/* Státusz darabszám */
+#status-count {
+  text-align:center;
+  margin-bottom:20px;
   font-weight:600;
-  margin-left:5px;
+  color:#1E5BAB;
+  font-size:1em;
 }
 
 /* Rendező gombok */
@@ -57,14 +61,9 @@ h1 {
   font-weight: 600;
   cursor: pointer;
 }
-.sort-buttons button:hover {
-  background: #174a8f;
-}
+.sort-buttons button:hover { background: #174a8f; }
 
-#gallery {
-  max-width: 950px;
-  margin: 0 auto;
-}
+#gallery { max-width: 950px; margin: 0 auto; }
 
 .banknote {
   display: flex;
@@ -92,7 +91,7 @@ h1 {
   border-radius: 6px;
 }
 .statusz.elerheto { background: #dbffdb; color: #0a7a0a; }
-.statusz.ELKELT { background: #ffd3d3; color: #b30000; }
+.statusz.elkelt { background: #ffd3d3; color: #b30000; }
 
 .images {
   flex: 1;
@@ -148,7 +147,8 @@ h1 {
   <span id="sum-display"></span>
 </h1>
 
-<!-- Rendező gombok -->
+<div id="status-count"></div>
+
 <div class="sort-buttons">
   <button onclick="sortByCountry()">Országok (ABC)</button>
   <button onclick="sortByPrice()">Árak (emelkedő)</button>
@@ -163,91 +163,107 @@ h1 {
 </div>
 
 <script>
+function updateStatusCount() {
+  const gallery = document.getElementById('gallery');
+  let elerheto = 0;
+  let elkelt = 0;
+  [...gallery.children].forEach(card => {
+    const status = card.querySelector('.statusz');
+    if(status){
+      if(status.classList.contains('elerheto')) elerheto++;
+      if(status.classList.contains('elkelt')) elkelt++;
+    }
+  });
+  document.getElementById('status-count').textContent =
+    `Elérhető: ${elerheto} db | Elkelt: ${elkelt} db`;
+}
+
 fetch('bankjegyek.csv')
-  .then(res => res.text())
-  .then(data => {
-    const rows = data.replace(/\r/g, '').trim().split('\n').slice(1);
-    const gallery = document.getElementById('gallery');
+.then(res => res.text())
+.then(data => {
+  const rows = data.replace(/\r/g,'').trim().split('\n').slice(1);
+  const gallery = document.getElementById('gallery');
 
-    rows.forEach((row, index) => {
-      const [sorsz, orszag, cimlet, ev, allapot, leiras, ar, statusz, elolap, hatlap] = row.split(';');
-      if (!orszag) return;
+  rows.forEach((row,index)=>{
+    const [sorsz,orszag,cimlet,ev,allapot,leiras,ar,statusz,elolap,hatlap] = row.split(';');
+    if(!orszag) return;
 
-      const card = document.createElement('div');
-      card.className = 'banknote';
-      card.dataset.country = orszag.toLowerCase();
-      card.dataset.price = parseFloat(ar.replace(/[^\d]/g, '')) || 0;
-      card.dataset.original = index;
+    const statusClass = statusz.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,'');
 
-      const isSold = statusz.trim().toUpperCase() === "ELKELT";
+    const card = document.createElement('div');
+    card.className = 'banknote';
+    card.dataset.country = orszag.toLowerCase();
+    card.dataset.price = parseFloat(ar.replace(/[^\d]/g,'')) || 0;
+    card.dataset.original = index;
 
-      card.innerHTML = `
-        <div class="number">${sorsz}.</div>
-        <div class="info">
-          <p class="orszag"><strong>Ország:</strong> <span>${orszag}</span></p>
-          <p><strong>Címlet:</strong> ${cimlet}</p>
-          <p><strong>Évjárat:</strong> ${ev}</p>
-          <p><strong>Állapot:</strong> <span class="status-value">${allapot}</span></p>
-          <p><strong>Leírás:</strong> ${leiras}</p>
-          <p class="ar"><strong>Ár:</strong> <span>${ar}</span></p>
-          <p class="statusz ${statusz}">${statusz}</p>
-        </div>
-        <div class="images">
-          ${isSold ? '<div class="watermark">ELKELT</div>' : ''}
-          <img src="${elolap.trim()}" onclick="openModal(this)">
-          <img src="${hatlap.trim()}" onclick="openModal(this)">
-        </div>
-      `;
-      gallery.appendChild(card);
-    });
+    const isSold = statusClass === "elkelt";
+
+    card.innerHTML = `
+      <div class="number">${sorsz}.</div>
+      <div class="info">
+        <p class="orszag"><strong>Ország:</strong> <span>${orszag}</span></p>
+        <p><strong>Címlet:</strong> ${cimlet}</p>
+        <p><strong>Évjárat:</strong> ${ev}</p>
+        <p><strong>Állapot:</strong> <span class="status-value">${allapot}</span></p>
+        <p><strong>Leírás:</strong> ${leiras}</p>
+        <p class="ar"><strong>Ár:</strong> <span>${ar}</span></p>
+        <p class="statusz ${statusClass}">${statusz}</p>
+      </div>
+      <div class="images">
+        ${isSold ? '<div class="watermark">ELKELT</div>' : ''}
+        <img src="${elolap.trim()}" onclick="openModal(this)">
+        <img src="${hatlap.trim()}" onclick="openModal(this)">
+      </div>
+    `;
+    gallery.appendChild(card);
   });
 
-function sortByCountry() {
-  const gallery = document.getElementById('gallery');
-  [...gallery.children]
-    .sort((a,b) => a.dataset.country.localeCompare(b.dataset.country, 'hu'))
-    .forEach(el => gallery.appendChild(el));
-}
-
-function sortByPrice() {
-  const gallery = document.getElementById('gallery');
-  [...gallery.children]
-    .sort((a,b) => a.dataset.price - b.dataset.price)
-    .forEach(el => gallery.appendChild(el));
-}
-
-function sortByOriginal() {
-  const gallery = document.getElementById('gallery');
-  [...gallery.children]
-    .sort((a,b) => (a.dataset.original || 0) - (b.dataset.original || 0))
-    .forEach(el => gallery.appendChild(el));
-}
-
-// Toggle összesített ár megjelenítés
-let sumVisible = false;
-document.getElementById('sum-button').addEventListener('click', () => {
-  const display = document.getElementById('sum-display');
-  if(sumVisible){
-    display.textContent = '';
-    sumVisible = false;
-  } else {
-    const gallery = document.getElementById('gallery');
-    let total = 0;
-    [...gallery.children].forEach(card => {
-      total += parseFloat(card.dataset.price) || 0;
-    });
-    display.textContent = total.toLocaleString('hu-HU') + ' Ft';
-    sumVisible = true;
-  }
+  // Frissítjük az összesített státusz darabszámot a betöltés után
+  updateStatusCount();
 });
 
-function openModal(img) {
-  document.getElementById('modal').style.display = "block";
-  document.getElementById('modal-img').src = img.src;
+// Rendezés
+function sortByCountry(){
+  const g=document.getElementById('gallery');
+  [...g.children].sort((a,b)=>a.dataset.country.localeCompare(b.dataset.country,'hu')).forEach(e=>g.appendChild(e));
 }
-function closeModal() {
-  document.getElementById('modal').style.display = "none";
+function sortByPrice(){
+  const g=document.getElementById('gallery');
+  [...g.children].sort((a,b)=>a.dataset.price-b.dataset.price).forEach(e=>g.appendChild(e));
 }
+function sortByOriginal(){
+  const g=document.getElementById('gallery');
+  [...g.children].sort((a,b)=>a.dataset.original-b.dataset.original).forEach(e=>g.appendChild(e));
+}
+
+// Összeg gomb (csak elérhető tételek)
+let sumVisible=false;
+document.getElementById('sum-button').onclick=()=>{
+  const d=document.getElementById('sum-display');
+  if(sumVisible){ d.textContent=''; sumVisible=false; }
+  else{
+    let t=0;
+    [...document.getElementById('gallery').children].forEach(c=>{
+      if(c.querySelector('.statusz').classList.contains('elerheto')){
+        t+=parseFloat(c.dataset.price)||0;
+      }
+    });
+    d.textContent=t.toLocaleString('hu-HU')+' Ft';
+    sumVisible=true;
+  }
+};
+
+// Modal képek
+function openModal(img){
+  document.getElementById('modal').style.display="block";
+  document.getElementById('modal-img').src=img.src;
+}
+function closeModal(){
+  document.getElementById('modal').style.display="none";
+}
+
+// Automatikus státusz frissítés (pl. új tételek esetén)
+setInterval(updateStatusCount, 5000);
 </script>
 
 </body>
